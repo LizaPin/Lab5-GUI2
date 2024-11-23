@@ -50,6 +50,31 @@ class MainWindow(QMainWindow):
         self.setWindowTitle('Работа с данными')
         self.setGeometry(400, 400, 800, 600)
         self.show()
+        self.setStyleSheet("""
+            QMainWindow { background-color: #DDA0DD; }
+            QMenuBar { background-color: #8A2BE2; color: white; }
+            QPushButton { background-color: white; color: black; }
+            QTableWidget { background-color: white; color: black; }
+            QDialog, QMessageBox, QCalendarWidget {
+                background-color: #FFFFFF;  /* Светлый фон */
+                color: #000000;            /* Чёрный текст */
+                border: 1px solid #8A2BE2;
+            }
+        """)
+
+        self.setStyleSheet("""
+            QMainWindow { background-color: #DDA0DD; }
+            QMenuBar { background-color: #8A2BE2; color: white; }
+            QPushButton { background-color: white; color: black; }
+            QTableWidget { background-color: white; color: black; }
+            QDialog, QMessageBox, QCalendarWidget {
+                background-color: #FFFFFF;  /* Светлый фон */
+                color: #000000;            /* Чёрный текст */
+                border: 1px solid #8A2BE2;
+            }
+        """)
+
+
 
     def init_processing_tab(self):
         layout = QVBoxLayout(self.processing_tab)
@@ -152,11 +177,12 @@ class MainWindow(QMainWindow):
 
         for i, row in data.iterrows():
             table.insertRow(i)
-            table.setItem(i, 0, QTableWidgetItem(str(row["date"])))
+            table.setItem(i, 0, QTableWidgetItem(row["date"].strftime("%Y-%m-%d")))  # Формат даты без времени
             table.setItem(i, 1, QTableWidgetItem(str(row["value"])))
             if analysis:
                 table.setItem(i, 2, QTableWidgetItem(f"{row['deviation_from_median']:.2f}"))
                 table.setItem(i, 3, QTableWidgetItem(f"{row['deviation_from_mean']:.2f}"))
+
         table.resizeColumnsToContents()
 
     def on_annotation_click(self):
