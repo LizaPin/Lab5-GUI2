@@ -12,34 +12,51 @@ def splitting_x_y(filename="./dataset.csv", x_file="./splitXY/x.csv", y_file="./
         bool: True, если успешно, иначе False.
     """
     try:
+        # Проверяем существование исходного файла
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"Файл {filename} не найден.")
+
         # Создаем папку splitXY, если она не существует
         os.makedirs(os.path.dirname(x_file), exist_ok=True)
         os.makedirs(os.path.dirname(y_file), exist_ok=True)
-        
-        # Открываем исходный файл и файлы для записи
-        with open(filename, "r") as file, open(x_file, "w") as dates_file, open(y_file, "w") as values_file:
+
+        # Открываем исходный файл
+        with open(filename, "r") as file:
             # Пропускаем заголовок, если он есть
             header = file.readline().strip()
             if header.lower().startswith(("дата", "date")):
                 print("Обнаружен заголовок, он будет пропущен.")
-            
+
+            # Создаем временные списки для дат и значений
+            dates = []
+            values = []
+
             for line in file:
                 # Разделяем строку на дату и цену
                 date_and_value = line.strip().split(';')
-                
+
                 if len(date_and_value) != 2:
                     # Если строка не состоит из двух элементов, выводим предупреждение
-                    print(f"Неподходящий формат строки: {line.strip()}. Строка пропущена.")
-                    continue
-                
-                # Записываем дату в файл x и цену в файл y
-                dates_file.write(date_and_value[0] + "\n")
-                values_file.write(date_and_value[1] + "\n")
-        
+                    print(f"Неподходящий формат строки: {line.strip()}.")
+                    return False  # Завершаем функцию
+
+                # Добавляем данные во временные списки
+                dates.append(date_and_value[0])
+                values.append(date_and_value[1])
+
+        # Записываем данные из временных списков в файлы
+        with open(x_file, "w") as dates_file:
+            dates_file.write("\n".join(dates))
+        with open(y_file, "w") as values_file:
+            values_file.write("\n".join(values))
+
         return True
-    
+
+    except FileNotFoundError as fnf_error:
+        print(fnf_error)
+        return False
     except Exception as e:
-        # Ловим любые ошибки при открытии/чтении/записи файлов
+        # Ловим любые другие ошибки
         print(f"Ошибка: {e.__class__.__name__} - {str(e)}")
         return False
 
