@@ -2,7 +2,8 @@ import os
 import datetime
 
 def splitting_week(filename="./dataset.csv", result_folder=""):
-    """Разделить датасет по неделям и сохранить в несколько CSV файлов.
+    """
+    Разделить датасет по неделям и сохранить в несколько CSV файлов.
 
     Аргументы:
         filename (str): Путь до исходного файла с данными.
@@ -12,16 +13,15 @@ def splitting_week(filename="./dataset.csv", result_folder=""):
         bool: True, если успешно, иначе False.
     """
     try:
-        # Убедимся, что папка для результатов существует или создадим её
-        if result_folder:
-            os.makedirs(result_folder, exist_ok=True)
-        else:
-            result_folder = "./"
-        
+        # Проверяем существование исходного файла
+        if not os.path.exists(filename):
+            print(f"Файл {filename} не найден.")
+            return False
+
         with open(filename, "r") as file:
             # Пропускаем строку с заголовками (если есть)
             header = file.readline().strip()
-            
+
             dates = []  # Список для хранения дат
             values = []  # Список для хранения значений
             last_day_of_week = -1  # Индекс последнего дня недели
@@ -29,9 +29,8 @@ def splitting_week(filename="./dataset.csv", result_folder=""):
             for line in file:
                 # Разделяем строку на дату и значение
                 date_and_value = line.strip().split(';')
-                
+
                 if len(date_and_value) != 2:
-                    # Проверяем, что строка состоит из двух элементов
                     print("Неправильный формат строки. Операция прервана.")
                     return False
 
@@ -43,12 +42,13 @@ def splitting_week(filename="./dataset.csv", result_folder=""):
                     return False
 
                 current_day_of_week = date.weekday()  # Получаем день недели (0 - понедельник, 6 - воскресенье)
-                
+
                 # Сохраняем данные за предыдущую неделю, если день недели изменился
                 if last_day_of_week < current_day_of_week and last_day_of_week != -1:
+                    # Убедимся, что папка для результатов создана перед записью файла
+                    os.makedirs(result_folder, exist_ok=True)
                     result_file_name = f"{result_folder}/{dates[0].replace('-', '')}_{dates[-1].replace('-', '')}.csv"
                     with open(result_file_name, mode="w") as result_file:
-                        # Записываем данные в файл
                         for date_str, value in zip(dates, values):
                             result_file.write(f"{date_str};{value}\n")
                     
@@ -63,6 +63,14 @@ def splitting_week(filename="./dataset.csv", result_folder=""):
                 # Обновляем последний день недели
                 last_day_of_week = current_day_of_week
 
+        # Если остались данные, записываем их в последний файл
+        if dates:
+            os.makedirs(result_folder, exist_ok=True)
+            result_file_name = f"{result_folder}/{dates[0].replace('-', '')}_{dates[-1].replace('-', '')}.csv"
+            with open(result_file_name, mode="w") as result_file:
+                for date_str, value in zip(dates, values):
+                    result_file.write(f"{date_str};{value}\n")
+
         return True
 
     except Exception as e:
@@ -70,13 +78,17 @@ def splitting_week(filename="./dataset.csv", result_folder=""):
         print(f"Ошибка: {e.__class__.__name__} - {str(e)}")
         return False
 
+
 def main():
+    """
+    Главная функция для вызова splitting_week с вводом параметров от пользователя.
+    """
     # Запрашиваем путь до входного файла
     filename = input("Введите путь до файла (по умолчанию: ./dataset.csv): ").strip() or "./dataset.csv"
-    
+
     # Запрашиваем путь до папки для сохранения результатов
     result_folder = input("Введите путь до папки для сохранения результатов (по умолчанию: ./by_week): ").strip() or "./by_week"
-    
+
     # Вызываем функцию splitting_week и выводим результат
     if splitting_week(filename=filename, result_folder=result_folder):
         print("Успех")
@@ -86,6 +98,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-    
