@@ -7,6 +7,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from util import splitting_x_y, date_search, splitting_week, splitting_year, create_annotation
 
+from util.data_analysis import create_period, create_month, filter_by_deviation, filter_date
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -248,57 +250,45 @@ class MainWindow(QMainWindow):
         try:
             filter_value, ok = QInputDialog.getDouble(self, "Фильтр по отклонению", "Введите значение отклонения:", decimals=2)
             if ok:
-                filtered_df = self.df[(abs(self.df["deviation_from_median"]) > filter_value) |
-                                      (abs(self.df["deviation_from_mean"]) > filter_value)]
+                filtered_df = filter_by_deviation(self.df, filter_value)
                 self.fill_table(self.table_analysis, filtered_df, analysis=True)
             else:
                 QMessageBox.information(self, "Отмена", "Фильтр не применён.")
         except Exception as e:
             QMessageBox.critical(self, "Ошибка", f"Произошла ошибка: {e}")
 
+
     def show_full_graph(self):
-        plt.figure()
-        plt.plot(self.df["date"], self.df["value"], label="Стоимость")
-        plt.title("График за весь период")
-        plt.xlabel("Дата")
-        plt.ylabel("Стоимость")
-        plt.legend()
-        plt.grid()
-        plt.show()
+        try:
+            create_period(self.df, None, None)  # Весь период
+        except Exception as e:
+            QMessageBox.critical(self, "Ошибка", f"Произошла ошибка: {e}")
+
 
     def show_period_graph(self):
         start_date = self.open_calendar()
         end_date = self.open_calendar()
         if start_date and end_date:
-            period_df = self.df[(self.df["date"] >= start_date) & (self.df["date"] <= end_date)]
-            plt.figure()
-            plt.plot(period_df["date"], period_df["value"], label="Стоимость")
-            plt.title(f"График за период: {start_date} - {end_date}")
-            plt.xlabel("Дата")
-            plt.ylabel("Стоимость")
-            plt.legend()
-            plt.grid()
-            plt.show()
+            period_df = filter_date(self.df, start_date, end_date)
+            if not period_df.empty:
+                try:
+                    create_period(period_df, start_date, end_date)
+                except Exception as e:
+                    QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при создании графика: {e}")
+            else:
+                QMessageBox.information(self, "Нет данных", "Нет данных для выбранного периода.")
+
 
     def show_month_graph(self):
         selected_date = self.open_calendar()
         if selected_date:
-            selected_month = pd.to_datetime(selected_date).month
-            selected_year = pd.to_datetime(selected_date).year
-            month_df = self.df[(self.df["date"].dt.month == selected_month) & (self.df["date"].dt.year == selected_year)]
-            median_value = month_df["value"].median()
-            mean_value = month_df["value"].mean()
+            selected_month = pd.to_datetime(selected_date).strftime('%Y-%m')
+            month_df = filter_date(self.df, None, None)
+            try:
+                create_month(month_df, selected_month)
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка", f"Произошла ошибка при создании графика: {e}")
 
-            plt.figure()
-            plt.plot(month_df["date"], month_df["value"], label="Стоимость")
-            plt.axhline(y=median_value, color='r', linestyle='--', label=f"Медиана: {median_value:.2f}")
-            plt.axhline(y=mean_value, color='g', linestyle='--', label=f"Среднее: {mean_value:.2f}")
-            plt.title(f"График за {selected_month}/{selected_year}")
-            plt.xlabel("Дата")
-            plt.ylabel("Стоимость")
-            plt.legend()
-            plt.grid()
-            plt.show()
 
 
 if __name__ == '__main__':
